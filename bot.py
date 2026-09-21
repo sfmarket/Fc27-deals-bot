@@ -125,31 +125,31 @@ test_players = [
                 "platform": player["platform"]
             })
 
-    if not deals:
-        await interaction.response.send_message(
-            "🔎 Scan complete — no deals found."
-        )
-        return
+    if not deals:
+        await interaction.response.send_message(
+            "🔎 Scan complete — no deals found."
+        )
+        return
 
-    embed = discord.Embed(
-        title="🚨 FC27 DEAL SCAN",
-        description="Potential price drops detected!",
-        color=discord.Color.green()
-    )
+    embed = discord.Embed(
+        title="🚨 FC27 DEAL SCAN",
+        description="Potential price drops detected!",
+        color=discord.Color.green()
+        )
 
-    for deal in deals:
-        embed.add_field(
-            name=f"🔥 {deal['name']}",
-            value=(
-                f"💰 Current: **{deal['current']:,}**\n"
-                f"📊 Average: **{deal['average']:,}**\n"
-                f"📉 Drop: **{deal['drop']}%**\n"
-                f"🎮 Platform: **{deal['platform']}**"
-            ),
-            inline=False
-        )
+    for deal in deals:
+        embed.add_field(
+            name=f"🔥 {deal['name']}",
+            value=(
+                f"💰 Current: **{deal['current']:,}**\n"
+                f"📊 Average: **{deal['average']:,}**\n"
+                f"📉 Drop: **{deal['drop']}%**\n"
+                f"🎮 Platform: **{deal['platform']}**"
+            ),
+            inline=False
+        )
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed)
 if not TOKEN:
     raise RuntimeError("DISCORD_TOKEN is not set")
 
