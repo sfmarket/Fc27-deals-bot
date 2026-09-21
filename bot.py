@@ -102,64 +102,64 @@ async def scan(interaction: discord.Interaction):
 
 test_players = [
     (
-        "name": "Example Player 1",
-        "current_price": 85000,
-        "average_price": 120000,
-        "platform": "Console"
-    },
-    {
-        "name": "Example Player 2",
-        "current_price": 95000,
-        "average_price": 105000,
-        "platform": "PC"
-    }
+    "name": "Example Player 1",
+    "current_price": 85000,
+    "average_price": 120000,
+    "platform": "Console"
+  },
+  {
+    "name": "Example Player 2",
+    "current_price": 95000,
+    "average_price": 105000,
+    "platform": "PC"
+  }
 ]
 
-    deals = []
+  deals = []
 
-    for player in test_players:
-        drop = calculate_price_drop(
-            player["current_price"],
-            player["average_price"]
-        )
-
-        if is_deal(
-            player["current_price"],
-            player["average_price"]
-        ):
-            deals.append({
-                "name": player["name"],
-                "current": player["current_price"],
-                "average": player["average_price"],
-                "drop": drop,
-                "platform": player["platform"]
-            })
-
-    if not deals:
-        await interaction.response.send_message(
-            "🔎 Scan complete — no deals found."
-        )
-        return
-
-    embed = discord.Embed(
-        title="🚨 FC27 DEAL SCAN",
-        description="Potential price drops detected!",
-        color=discord.Color.green()
+  for player in test_players:
+    drop = calculate_price_drop(
+      player["current_price"],
+      player["average_price"]
     )
 
-    for deal in deals:
-        embed.add_field(
-            name=f"🔥 {deal['name']}",
-            value=(
-                f"💰 Current: **{deal['current']:,}**\n"
-                f"📊 Average: **{deal['average']:,}**\n"
-                f"📉 Drop: **{deal['drop']}%**\n"
-                f"🎮 Platform: **{deal['platform']}**"
-            ),
-            inline=False
-        )
+    if is_deal(
+      player["current_price"],
+      player["average_price"]
+    ):
+      deals.append({
+        "name": player["name"],
+        "current": player["current_price"],
+        "average": player["average_price"],
+        "drop": drop,
+        "platform": player["platform"]
+      })
 
-    await interaction.response.send_message(embed=embed)
+  if not deals:
+    await interaction.response.send_message(
+      "🔎 Scan complete — no deals found."
+    )
+    return
+
+  embed = discord.Embed(
+    title="🚨 FC27 DEAL SCAN",
+    description="Potential price drops detected!",
+    color=discord.Color.green()
+  )
+
+  for deal in deals:
+    embed.add_field(
+      name=f"🔥 {deal['name']}",
+      value=(
+        f"💰 Current: **{deal['current']:,}**\n"
+        f"📊 Average: **{deal['average']:,}**\n"
+        f"📉 Drop: **{deal['drop']}%**\n"
+        f"🎮 Platform: **{deal['platform']}**"
+      ),
+      inline=False
+    )
+
+  await interaction.response.send_message(embed=embed)
 if not TOKEN:
     raise RuntimeError("DISCORD_TOKEN is not set")
 
