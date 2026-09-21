@@ -109,7 +109,7 @@ async def scan(interaction: discord.Interaction):
 
     for player in test_players:
         drop = calculate_price_drop(
-            player["current_price"]
+            player["current_price"],
             player["average_price"]
         )
 
