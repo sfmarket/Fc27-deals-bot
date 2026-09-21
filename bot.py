@@ -100,9 +100,9 @@ async def deal(
 )
 async def scan(interaction: discord.Interaction):
 
-test_players = [
-    {"name": "Example Player 1", "current price": 85000, "average_price": 120000, "platform": "console"},
-    {"name": "Example player 2", "current price": 95000, "average_price": 105000, "platform": "PC"}
+    test_players = [
+        {"name": "Example Player 1", "current price": 85000, "average_price": 120000, "platform": "console"},
+        {"name": "Example player 2", "current price": 95000, "average_price": 105000, "platform": "PC"}
 ]
 
     deals = []
