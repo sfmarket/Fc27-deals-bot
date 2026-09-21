@@ -105,7 +105,7 @@ test_players = [
     {"name": "Example player 2", "current price": 95000, "average_price": 105000, "platform": "PC"}
 ]
 
-    deals = []
+    deals = []
 
     for player in test_players:
         drop = calculate_price_drop(
