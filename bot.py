@@ -153,8 +153,6 @@ async def scan(interaction: discord.Interaction):
 if not TOKEN:
     raise RuntimeError("DISCORD_TOKEN is not set")
 
-
-client.run(TOKEN)
 def calculate_price_drop(current_price, average_price):
     if average_price <= 0:
         return 0
@@ -167,3 +165,5 @@ def is_deal(current_price, average_price, minimum_drop=20):
     drop = calculate_price_drop(current_price, average_price)
 
     return drop >= minimum_drop
+client.run(TOKEN)
+
