@@ -96,7 +96,7 @@ async def deal(
 
 @client.tree.command(
     name="scan",
-    description="Test the FC27 deal scanner"
+    description="Test the FC27 deal scanner"
 )
 async def scan(interaction: discord.Interaction):
 
