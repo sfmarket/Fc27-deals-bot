@@ -118,12 +118,12 @@ test_players = [
             player["average_price"]
         ):
             deals.append({
-                "name": player["name"],
-                "current": player["current_price"],
-                "average": player["average_price"],
-                "drop": drop,
-                "platform": player["platform"]
-            })
+                "name": player["name"],
+                "current": player["current_price"],
+                "average": player["average_price"],
+                "drop": drop,
+                "platform": player["platform"]
+            })
 
     if not deals:
         await interaction.response.send_message(
