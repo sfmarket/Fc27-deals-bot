@@ -95,7 +95,7 @@ async def deal(
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(
-    name="scan",
+    name="scan",
     description="Test the FC27 deal scanner"
 )
 async def scan(interaction: discord.Interaction):
