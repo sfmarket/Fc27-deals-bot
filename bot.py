@@ -100,3 +100,15 @@ if not TOKEN:
 
 
 client.run(TOKEN)
+def calculate_price_drop(current_price, average_price):
+    if average_price <= 0:
+        return 0
+
+    drop = ((average_price - current_price) / average_price) * 100
+    return round(drop, 1)
+
+
+def is_deal(current_price, average_price, minimum_drop=20):
+    drop = calculate_price_drop(current_price, average_price)
+
+    return drop >= minimum_drop
