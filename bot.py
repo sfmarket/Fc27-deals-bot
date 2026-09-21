@@ -111,13 +111,13 @@ test_players = [
         drop = calculate_price_drop(
             player["current_price"]
             player["average_price"]
-        )
+        )
 
-        if is_deal(
-            player["current_price"],
-            player["average_price"]
-        ):
-            deals.append({
+        if is_deal(
+            player["current_price"],
+            player["average_price"]
+        ):
+            deals.append({
                 "name": player["name"],
                 "current": player["current_price"],
                 "average": player["average_price"],
