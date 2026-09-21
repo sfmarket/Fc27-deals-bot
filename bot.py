@@ -108,7 +108,7 @@ test_players = [
     deals = []
 
     for player in test_players:
-        drop = calculate_price_drop(
+        drop = calculate_price_drop(
             player["current_price"],
             player["average_price"]
         )
