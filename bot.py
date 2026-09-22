@@ -159,6 +159,33 @@ def save_player_price(
 
     conn.commit()
     conn.close()
+
+
+def load_prices():
+    conn = sqlite3.connect(DB_FILE)
+
+    rows = conn.execute(
+        "SELECT player_id, price FROM prices"
+    ).fetchall()
+
+    conn.close()
+
+    return {player_id: price for player_id, price in rows}
+
+
+def save_prices(prices):
+    conn = sqlite3.connect(DB_FILE)
+
+    for player_id, price in prices.items():
+        conn.execute(
+            "UPDATE prices SET price = ?, scanned_at = CURRENT_TIMESTAMP WHERE player_id = ?",
+            (price, player_id)
+        )
+
+    conn.commit()
+    conn.close()
+
+
 @client.tree.command(
     name="scan",
     description="Scan real FC27 market prices"
