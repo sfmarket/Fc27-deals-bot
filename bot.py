@@ -297,7 +297,7 @@ def get_fc27_players(platform="ps", min_rating=85):
     all_players = []
 
     for page in range(1, 4):
-        params = {
+        params = {
             "page": page,
             "platform": platform,
             "min_rating": min_rating
