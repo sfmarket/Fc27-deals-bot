@@ -4,10 +4,12 @@ import requests
 import json
 import sqlite3
 from discord import app_commands
+from discord.ext import tasks
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 MINIMUM_DROP = 5
-
+AUTO_SCAN_MINUTES = 15
+AUTO_SCAN_CHANNEL_ID = int(os.getenv("AUTO_SCAN_CHANNEL_ID", "0"))
 
 class DealsBot(discord.Client):
     def __init__(self):
@@ -26,6 +28,9 @@ client = DealsBot()
 async def on_ready():
     print(f"Logged in as {client.user}")
     print("FC Deals bot is online!")
+
+    if not auto_scan.is_running():
+        auto_scan.start()
 
 
 @client.tree.command(
