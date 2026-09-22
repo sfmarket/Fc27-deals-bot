@@ -290,13 +290,13 @@ PARSE_API_KEY = os.getenv("PARSE_API_KEY")
 def get_fc27_players(platform="ps", min_rating=85):
     url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
 
-    headers = {
-        "X-API-Key": PARSE_API_KEY
-    }
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
 
-    all_players = []
+    all_players = []
 
-    for page in range(1, 4):
+    for page in range(1, 4):
         params = {
             "page": page,
             "platform": platform,
