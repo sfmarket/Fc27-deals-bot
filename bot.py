@@ -420,11 +420,11 @@ async def auto_scan():
 
         print(f"AUTO SCAN: Scanned {len(players)} players.")
 
-        if deals:
-    deals.sort(
-        key=lambda deal: (
-            deal["old_price"] - deal["price"],
-            deal["drop"]
+    if deals:
+        deals.sort(
+            key=lambda deal: (
+                deal["old_price"] - deal["price"],
+                deal["drop"]
         ),
         reverse=True
     )
