@@ -167,5 +167,59 @@ def is_deal(current_price, average_price, minimum_drop=20):
     drop = calculate_price_drop(current_price, average_price)
 
     return drop >= minimum_drop
+    PARSE_API_KEY = os.getenv("PARSE_API_KEY")
+
+def get_fc27_players(platform="ps", min_rating=85):
+    url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
+
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
+
+    params = {
+        "page": 1,
+        "platform": platform,
+        "min_rating": min_rating
+    }
+
+    response = requests.get(
+        url,
+        headers=headers,
+        params=params,
+        timeout=20
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["data"]["players"]
+@client.tree.command(name="live", description="Test live FC27 market prices")
+async def live(interaction: discord.Interaction):
+    try:
+        players = get_fc27_players("ps", 85)
+
+        if not players:
+            await interaction.response.send_message(
+                "⚠️ No FC27 players were returned."
+            )
+            return
+
+        player = players[0]
+
+        await interaction.response.send_message(
+            f"🟢 **LIVE FC27 DATA WORKING!**\n\n"
+            f"👤 **{player['name']}**\n"
+            f"⭐ Rating: **{player['rating']}**\n"
+            f"📍 Position: **{player['position']}**\n"
+            f"💰 Price: **{player['price']:,} coins**\n"
+            f"🎮 Platform: **PlayStation**"
+        )
+
+    except Exception as e:
+        await interaction.response.send_message(
+            "❌ Couldn't retrieve live FC27 data."
+        )
+        print(f"FUT API ERROR: {e}")
 client.run(TOKEN)
 
