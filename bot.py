@@ -420,16 +420,16 @@ async def auto_scan():
 
         print(f"AUTO SCAN: Scanned {len(players)} players.")
 
-    if deals:
-        deals.sort(
-            key=lambda deal: (
-                deal["old_price"] - deal["price"],
-                deal["drop"]
-        ),
-        reverse=True
-    )
+        if deals:
+            deals.sort(
+                key=lambda deal: (
+                    deal["old_price"] - deal["price"],
+                    deal["drop"]
+                ),
+                reverse=True
+            )
 
-    print(f"AUTO SCAN: Found {len(deals)} deals!")
+        print(f"AUTO SCAN: Found {len(deals)} deals!")
 
     channel = client.get_channel(AUTO_SCAN_CHANNEL_ID)
 
