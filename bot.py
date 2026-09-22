@@ -2,6 +2,7 @@ import os
 import discord
 import requests
 import json
+import sqlite3
 from discord import app_commands
 
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -95,20 +96,69 @@ async def deal(
     )
 
     await interaction.response.send_message(embed=embed)
-PRICE_FILE = "prices.json"
+DB_FILE = "prices.db"
 
 
-def load_prices():
-    try:
-        with open(PRICE_FILE, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return {}
+def init_database():
+    conn = sqlite3.connect(DB_FILE)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS prices (
+            player_id TEXT PRIMARY KEY,
+            name TEXT,
+            rating INTEGER,
+            position TEXT,
+            platform TEXT,
+            price INTEGER,
+            scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
-def save_prices(prices):
-    with open(PRICE_FILE, "w") as file:
-        json.dump(prices, file, indent=2)
+init_database()
+
+
+def get_previous_price(player_id):
+    conn = sqlite3.connect(DB_FILE)
+
+    row = conn.execute(
+        "SELECT price FROM prices WHERE player_id = ?",
+        (player_id,)
+    ).fetchone()
+
+    conn.close()
+
+    return row[0] if row else None
+
+
+def save_player_price(
+    player_id,
+    name,
+    rating,
+    position,
+    platform,
+    price
+):
+    conn = sqlite3.connect(DB_FILE)
+
+    conn.execute("""
+        INSERT OR REPLACE INTO prices
+        (player_id, name, rating, position, platform, price)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        player_id,
+        name,
+        rating,
+        position,
+        platform,
+        price
+    ))
+
+    conn.commit()
+    conn.close()
 @client.tree.command(
     name="scan",
     description="Scan real FC27 market prices"
