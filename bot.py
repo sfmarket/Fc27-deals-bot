@@ -186,7 +186,7 @@ def get_fc27_players(platform="ps", min_rating=85):
         url,
         headers=headers,
         params=params,
-        timeout=20
+        timeout=60
     )
 
     response.raise_for_status()
@@ -202,14 +202,14 @@ async def live(interaction: discord.Interaction):
         players = get_fc27_players("ps", 85)
 
         if not players:
-            await interaction.edit_original_resonse(
-                content="⚠️ No FC27 players were returned."
-            )
+            message = await interaction.original_resonse()
+            await message.edit(content="⚠️ No FC27 players were returned.")
             return
 
         player = players[0]
 
-        await interaction.edit_orignial_response(
+        message = await interaction.orignial_response()
+        await message.edit(
             content=(
                 f"🟢 **LIVE FC27 DATA WORKING!**\n\n"
                 f"👤 **{player['name']}**\n"
@@ -223,7 +223,8 @@ async def live(interaction: discord.Interaction):
     except Exception as e:
         print(f"FUT API ERROR: {type(e).__name__}: {e!r}")
         
-        await interaction.edit_orignial_response(
+        message = await interaction.orignial_response()
+        await message.edit(
             content="❌ Couldn't retrieve live FC27 data."
         )
         
