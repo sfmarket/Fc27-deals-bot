@@ -196,33 +196,36 @@ def get_fc27_players(platform="ps", min_rating=85):
     return data["data"]["players"]
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
+    await interaction.response.defer()
     
     try:
         players = get_fc27_players("ps", 85)
 
         if not players:
-            await interaction.followup.send(
-                "⚠️ No FC27 players were returned."
+            await interaction.edit_original_resonse(
+                content="⚠️ No FC27 players were returned."
             )
             return
 
         player = players[0]
 
-        await interaction.response.send_message(
-            f"🟢 **LIVE FC27 DATA WORKING!**\n\n"
-            f"👤 **{player['name']}**\n"
-            f"⭐ Rating: **{player['rating']}**\n"
-            f"📍 Position: **{player['position']}**\n"
-            f"💰 Price: **{player['price']:,} coins**\n"
-            f"🎮 Platform: **PlayStation**"
+        await interaction.edit_orignial_response(
+            content=(
+                f"🟢 **LIVE FC27 DATA WORKING!**\n\n"
+                f"👤 **{player['name']}**\n"
+                f"⭐ Rating: **{player['rating']}**\n"
+                f"📍 Position: **{player['position']}**\n"
+                f"💰 Price: **{player['price']:,} coins**\n"
+                f"🎮 Platform: **PlayStation**"
+            )
         )
-
+        
     except Exception as e:
         print(f"FUT API ERROR: {type(e).__name__}: {e!r}")
         
-        await interaction.followup.send(
-            "❌ Couldn't retrieve live FC27 data."
+        await interaction.edit_orignial_response(
+            content="❌ Couldn't retrieve live FC27 data."
         )
-        print(f"FUT API ERROR: {type(e).__name__}: {e!r}")
+        
 client.run(TOKEN)
 
