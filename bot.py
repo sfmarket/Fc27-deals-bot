@@ -311,7 +311,7 @@ def is_deal(current_price, average_price, minimum_drop=20):
     
 PARSE_API_KEY = os.getenv("PARSE_API_KEY")
 
-def get_fc27_players(platform="ps", min_rating=85):
+def get_fc27_players(platform="ps", min_rating=None):
     url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
 
     headers = {
@@ -319,14 +319,17 @@ def get_fc27_players(platform="ps", min_rating=85):
     }
 
     all_players = []
+    page = 1
 
-    for page in range(1, 4):
+    while True:
         params = {
             "page": page,
             "platform": platform,
-            "min_rating": min_rating
         }
 
+        if min_rating is not None:
+            params["min_rating"] = min_rating
+            
         response = requests.get(
             url,
             headers=headers,
@@ -342,8 +345,12 @@ def get_fc27_players(platform="ps", min_rating=85):
 
         all_players.extend(players)
 
-        if not page_data.get("next_page"):
+        next_page = page_data.get("next_page")
+
+        if next_page is None:
             break
+
+        page = next_page
 
     return all_players
 @client.tree.command(name="live", description="Test live FC27 market prices")
