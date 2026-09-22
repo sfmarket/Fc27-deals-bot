@@ -298,30 +298,30 @@ def get_fc27_players(platform="ps", min_rating=85):
 
     for page in range(1, 4):
         params = {
-            "page": page,
-            "platform": platform,
-            "min_rating": min_rating
-        }
+            "page": page,
+            "platform": platform,
+            "min_rating": min_rating
+        }
 
-        response = requests.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=60
-        )
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=60
+        )
 
-        response.raise_for_status()
+        response.raise_for_status()
 
-        data = response.json()
-        page_data = data.get("data", {})
-        players = page_data.get("players", [])
+        data = response.json()
+        page_data = data.get("data", {})
+        players = page_data.get("players", [])
 
-        all_players.extend(players)
+        all_players.extend(players)
 
-        if not page_data.get("next_page"):
-            break
+        if not page_data.get("next_page"):
+            break
 
-    return all_players
+    return all_players
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
     await interaction.response.defer()
