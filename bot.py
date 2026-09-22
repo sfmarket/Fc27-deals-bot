@@ -216,6 +216,14 @@ async def scan(interaction: discord.Interaction):
             player_id = f"{name}|{rating}|{position}|{card_type}"
 
             new_prices[player_id] = price
+            save_player_price(
+                player_id,
+                name,
+                rating,
+                position,
+                "PS",
+                price
+            )
 
             if player_id in old_prices:
                 old_price = old_prices[player_id]
@@ -233,7 +241,6 @@ async def scan(interaction: discord.Interaction):
                             "drop": round(drop, 1)
                         })
 
-        save_prices(new_prices)
 
         if not deals:
             await interaction.followup.send(
