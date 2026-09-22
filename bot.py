@@ -95,7 +95,20 @@ async def deal(
     )
 
     await interaction.response.send_message(embed=embed)
+PRICE_FILE = "prices.json"
 
+
+def load_prices():
+    try:
+        with open(PRICE_FILE, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
+
+
+def save_prices(prices):
+    with open(PRICE_FILE, "w") as file:
+        json.dump(prices, file, indent=2)
 @client.tree.command(
     name="scan",
     description="Scan real FC27 market prices"
@@ -112,35 +125,67 @@ async def scan(interaction: discord.Interaction):
             )
             return
 
-        players = sorted(
-            players,
-            key=lambda player: player.get("price", 0),
-            reverse=True
-        )
+        old_prices = load_prices()
+        new_prices = {}
+        deals = []
 
-        top_players = players[:10]
-
-        embed = discord.Embed(
-            title="🔎 FC27 LIVE MARKET SCAN",
-            description="Real PlayStation FC27 market data",
-            color=discord.Color.blue()
-        )
-
-        for player in top_players:
+        for player in players:
             name = player.get("name", "Unknown")
             rating = player.get("rating", "?")
             position = player.get("position", "?")
+            card_type = player.get("card_type", "")
             price = player.get("price", 0)
 
+            player_id = f"{name}|{rating}|{position}|{card_type}"
+
+            new_prices[player_id] = price
+
+            if player_id in old_prices:
+                old_price = old_prices[player_id]
+
+                if old_price > 0 and price < old_price:
+                    drop = ((old_price - price) / old_price) * 100
+
+                    if drop >= 5:
+                        deals.append({
+                            "name": name,
+                            "rating": rating,
+                            "position": position,
+                            "price": price,
+                            "old_price": old_price,
+                            "drop": round(drop, 1)
+                        })
+
+        save_prices(new_prices)
+
+        if not deals:
+            await interaction.followup.send(
+                f"🔎 **SCAN COMPLETE**\n\n"
+                f"Scanned **{len(players)} players**.\n"
+                f"💾 Prices saved.\n\n"
+                f"📊 No price drops of 5%+ detected yet.\n\n"
+                f"Run `/scan` again later to compare prices."
+            )
+            return
+
+        deals.sort(key=lambda deal: deal["drop"], reverse=True)
+
+        embed = discord.Embed(
+            title="🔥 FC27 DEALS FOUND",
+            description=f"Found {len(deals)} price drops.",
+            color=discord.Color.green()
+        )
+
+        for deal in deals[:10]:
             embed.add_field(
-                name=f"👤 {name} — {rating} {position}",
-                value=f"💰 **{price:,} coins**",
+                name=f"👤 {deal['name']} — {deal['rating']} {deal['position']}",
+                value=(
+                    f"💰 Now: **{deal['price']:,} coins**\n"
+                    f"📊 Previous: **{deal['old_price']:,} coins**\n"
+                    f"📉 Drop: **{deal['drop']}%**"
+                ),
                 inline=False
             )
-
-        embed.set_footer(
-            text=f"Scanned {len(players)} players • PlayStation"
-        )
 
         await interaction.followup.send(embed=embed)
 
@@ -148,7 +193,7 @@ async def scan(interaction: discord.Interaction):
         print(f"SCAN API ERROR: {type(e).__name__}: {e!r}")
 
         await interaction.followup.send(
-            "❌ Couldn't retrieve FC27 market data."
+            "❌ Couldn't complete the FC27 market scan."
         )
         
 def calculate_price_drop(current_price, average_price):
