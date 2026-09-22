@@ -165,9 +165,9 @@ def calculate_price_drop(current_price, average_price):
 
 def is_deal(current_price, average_price, minimum_drop=20):
     drop = calculate_price_drop(current_price, average_price)
-
     return drop >= minimum_drop
-    PARSE_API_KEY = os.getenv("PARSE_API_KEY")
+    
+PARSE_API_KEY = os.getenv("PARSE_API_KEY")
 
 def get_fc27_players(platform="ps", min_rating=85):
     url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
