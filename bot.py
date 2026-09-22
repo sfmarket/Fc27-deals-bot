@@ -98,63 +98,59 @@ async def deal(
 
 @client.tree.command(
     name="scan",
-    description="Test the FC27 deal scanner"
+    description="Scan real FC27 market prices"
 )
 async def scan(interaction: discord.Interaction):
+    await interaction.response.defer()
 
-    test_players = [
-        {"name": "Example Player 1", "current_price": 85000, "average_price": 120000, "platform": "console"},
-        {"name": "Example player 2", "current_price": 95000, "average_price": 105000, "platform": "PC"}
-]
+    try:
+        players = get_fc27_players("ps", 85)
 
-    deals = []
+        if not players:
+            await interaction.followup.send(
+                "⚠️ No FC27 players were returned."
+            )
+            return
 
-    for player in test_players:
-        drop = calculate_price_drop(
-            player["current_price"],
-            player["average_price"]
+        players = sorted(
+            players,
+            key=lambda player: player.get("price", 0),
+            reverse=True
         )
 
-        if is_deal(
-            player["current_price"],
-            player["average_price"]
-        ):
-            deals.append({
-                "name": player["name"],
-                "current": player["current_price"],
-                "average": player["average_price"],
-                "drop": drop,
-                "platform": player["platform"]
-            })
+        top_players = players[:10]
 
-    if not deals:
-        await interaction.response.send_message(
-            "🔎 Scan complete — no deals found."
-        )
-        return
-
-    embed = discord.Embed(
-        title="🚨 FC27 DEAL SCAN",
-        description="Potential price drops detected!",
-        color=discord.Color.green()
+        embed = discord.Embed(
+            title="🔎 FC27 LIVE MARKET SCAN",
+            description="Real PlayStation FC27 market data",
+            color=discord.Color.blue()
         )
 
-    for deal in deals:
-        embed.add_field(
-            name=f"🔥 {deal['name']}",
-            value=(
-                f"💰 Current: **{deal['current']:,}**\n"
-                f"📊 Average: **{deal['average']:,}**\n"
-                f"📉 Drop: **{deal['drop']}%**\n"
-                f"🎮 Platform: **{deal['platform']}**"
-            ),
-            inline=False
+        for player in top_players:
+            name = player.get("name", "Unknown")
+            rating = player.get("rating", "?")
+            position = player.get("position", "?")
+            price = player.get("price", 0)
+
+            embed.add_field(
+                name=f"👤 {name} — {rating} {position}",
+                value=f"💰 **{price:,} coins**",
+                inline=False
+            )
+
+        embed.set_footer(
+            text=f"Scanned {len(players)} players • PlayStation"
         )
 
-    await interaction.response.send_message(embed=embed)
-if not TOKEN:
-    raise RuntimeError("DISCORD_TOKEN is not set")
+        await interaction.followup.send(embed=embed)
 
+    except Exception as e:
+        print(f"SCAN API ERROR: {type(e).__name__}: {e!r}")
+
+        await interaction.followup.send(
+            "❌ Couldn't retrieve FC27 market data."
+        )
+        
 def calculate_price_drop(current_price, average_price):
     if average_price <= 0:
         return 0
