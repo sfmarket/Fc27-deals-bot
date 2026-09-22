@@ -416,7 +416,7 @@ async def auto_scan():
                             "drop": round(drop, 1)
                         })
 
-        save_prices(new_prices)
+                save_prices(new_prices)
 
         print(f"AUTO SCAN: Scanned {len(players)} players.")
 
@@ -431,24 +431,23 @@ async def auto_scan():
 
         print(f"AUTO SCAN: Found {len(deals)} deals!")
 
-    channel = client.get_channel(AUTO_SCAN_CHANNEL_ID)
+        channel = client.get_channel(AUTO_SCAN_CHANNEL_ID)
 
-    if channel:
-        message = "🔥 **FC27 DEALS FOUND**\n\n"
+        if channel and deals:
+            message = "🔥 **FC27 DEALS FOUND**\n\n"
 
-        for deal in deals[:10]:
-            message += (
-                f"👤 **{deal['name']}** — {deal['rating']} {deal['position']}\n"
-                f"💰 Now: **{deal['price']:,} coins**\n"
-                f"📊 Previous: **{deal['old_price']:,} coins**\n"
-                f"📉 Drop: **{deal['drop']}%**\n\n"
-            )
+            for deal in deals[:10]:
+                message += (
+                    f"👤 **{deal['name']}** — {deal['rating']} {deal['position']}\n"
+                    f"💰 Now: **{deal['price']:,} coins**\n"
+                    f"📈 Previous: **{deal['old_price']:,} coins**\n"
+                    f"📉 Drop: **{deal['drop']}%**\n\n"
+                )
 
-        await channel.send(message)
+            await channel.send(message)
 
     except Exception as e:
         print(f"AUTO SCAN ERROR: {type(e).__name__}: {e}")
-
 
 client.run(TOKEN)
 
