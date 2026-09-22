@@ -220,6 +220,6 @@ async def live(interaction: discord.Interaction):
         await interaction.response.send_message(
             "❌ Couldn't retrieve live FC27 data."
         )
-        print(f"FUT API ERROR: {e}")
+        print(f"FUT API ERROR: {type(e).__name__}: {e!r}")
 client.run(TOKEN)
 
