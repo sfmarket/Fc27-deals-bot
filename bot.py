@@ -376,6 +376,64 @@ async def live(interaction: discord.Interaction):
         await interaction.followup.send(
             "❌ Couldn't retrieve live FC27 data."
         )
-        
+@tasks.loop(minutes=AUTO_SCAN_MINUTES)
+async def auto_scan():
+    try:
+        players = get_fc27_players("ps", 85)
+
+        if not players:
+            print("AUTO SCAN: No players returned.")
+            return
+
+        old_prices = load_prices()
+        new_prices = {}
+        deals = []
+
+        for player in players:
+            name = player.get("name", "Unknown")
+            rating = player.get("rating", "?")
+            position = player.get("position", "?")
+            card_type = player.get("card_type", "?")
+            price = player.get("price", 0)
+
+            player_id = f"{name}|{rating}|{position}|{card_type}"
+
+            new_prices[player_id] = price
+
+            if player_id in old_prices:
+                old_price = old_prices[player_id]
+
+                if old_price > 0 and price < old_price:
+                    drop = ((old_price - price) / old_price) * 100
+
+                    if drop >= 5 and (old_price - price) >= 5000:
+                        deals.append({
+                            "name": name,
+                            "rating": rating,
+                            "position": position,
+                            "price": price,
+                            "old_price": old_price,
+                            "drop": round(drop, 1)
+                        })
+
+        save_prices(new_prices)
+
+        print(f"AUTO SCAN: Scanned {len(players)} players.")
+
+        if deals:
+            deals.sort(
+                key=lambda deal: (
+                    deal["old_price"] - deal["price"],
+                    deal["drop"]
+                ),
+                reverse=True
+            )
+
+            print(f"AUTO SCAN: Found {len(deals)} deals!")
+
+    except Exception as e:
+        print(f"AUTO SCAN ERROR: {type(e).__name__}: {e}")
+
+
 client.run(TOKEN)
 
