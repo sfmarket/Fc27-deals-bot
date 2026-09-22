@@ -1,5 +1,7 @@
 import os
 import discord
+import requests
+import json
 from discord import app_commands
 
 TOKEN = os.getenv("DISCORD_TOKEN")
