@@ -252,10 +252,7 @@ async def scan(interaction: discord.Interaction):
             )
             return
 
-        deals.sort(
-            key=lambda deal: (deal["old_price"] - deal["price"], deal["drop"],
-            reverse=True
-        )
+        deals.sort(key=lambda deal: (deal["old_price"] - deal["price"], deal["drop"], reverse=True)
 
         embed = discord.Embed(
             title="🔥 FC27 DEALS FOUND",
