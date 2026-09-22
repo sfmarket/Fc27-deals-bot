@@ -288,30 +288,40 @@ def is_deal(current_price, average_price, minimum_drop=20):
 PARSE_API_KEY = os.getenv("PARSE_API_KEY")
 
 def get_fc27_players(platform="ps", min_rating=85):
-    url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
+    url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
 
-    headers = {
-        "X-API-Key": PARSE_API_KEY
-    }
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
 
-    params = {
-        "page": 1,
-        "platform": platform,
-        "min_rating": min_rating
-    }
+    all_players = []
 
-    response = requests.get(
-        url,
-        headers=headers,
-        params=params,
-        timeout=60
-    )
+    for page in range(1, 4):
+        params = {
+            "page": page,
+            "platform": platform,
+            "min_rating": min_rating
+        }
 
-    response.raise_for_status()
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=60
+        )
 
-    data = response.json()
+        response.raise_for_status()
 
-    return data["data"]["players"]
+        data = response.json()
+        page_data = data.get("data", {})
+        players = page_data.get("players", [])
+
+        all_players.extend(players)
+
+        if not page_data.get("next_page"):
+            break
+
+    return all_players
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
     await interaction.response.defer()
