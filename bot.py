@@ -202,30 +202,27 @@ async def live(interaction: discord.Interaction):
         players = get_fc27_players("ps", 85)
 
         if not players:
-            message = await interaction.original_resonse()
-            await message.edit(content="⚠️ No FC27 players were returned.")
+            await interaction.followup.send(
+                "⚠️ No FC27 players were returned."
+            )
             return
 
         player = players[0]
 
-        message = await interaction.orignial_response()
-        await message.edit(
-            content=(
+        await interaction.followup.send(
                 f"🟢 **LIVE FC27 DATA WORKING!**\n\n"
                 f"👤 **{player['name']}**\n"
                 f"⭐ Rating: **{player['rating']}**\n"
                 f"📍 Position: **{player['position']}**\n"
                 f"💰 Price: **{player['price']:,} coins**\n"
                 f"🎮 Platform: **PlayStation**"
-            )
         )
         
     except Exception as e:
         print(f"FUT API ERROR: {type(e).__name__}: {e!r}")
         
-        message = await interaction.orignial_response()
-        await message.edit(
-            content="❌ Couldn't retrieve live FC27 data."
+        await interaction.followup.send(
+            "❌ Couldn't retrieve live FC27 data."
         )
         
 client.run(TOKEN)
