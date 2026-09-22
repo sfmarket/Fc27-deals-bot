@@ -231,7 +231,7 @@ async def scan(interaction: discord.Interaction):
                 if old_price > 0 and price < old_price:
                     drop = ((old_price - price) / old_price) * 100
 
-                    if drop >= 5:
+                    if drop >= 5 and (old_price - price) >= 5000:
                         deals.append({
                             "name": name,
                             "rating": rating,
