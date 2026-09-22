@@ -172,16 +172,11 @@ def load_prices():
 
     return {player_id: price for player_id, price in rows}
     def load_price_history():
-    conn = sqlite3.connect(DB_FILE)
+        conn = sqlite3.connect(DB_FILE)
+        rows = conn.execute("SELECT player_id, price, scanned_at FROM prices").fetchall()
+        conn.close()
 
-    rows = conn.execute(
-        "SELECT player_id, price, scanned_at FROM prices"
-    ).fetchall()
-
-    conn.close()
-
-    return {
-        player_id: {
+        return {player_id: {
             "price": price,
             "scanned_at": scanned_at
         }
