@@ -6,6 +6,7 @@ import sqlite3
 from discord import app_commands
 
 TOKEN = os.getenv("DISCORD_TOKEN")
+MINIMUM_DROP = 5
 
 
 class DealsBot(discord.Client):
@@ -242,7 +243,7 @@ async def scan(interaction: discord.Interaction):
                 if old_price > 0 and price < old_price:
                     drop = ((old_price - price) / old_price) * 100
 
-                    if drop >= 5 and (old_price - price) >= 5000:
+                    if drop >= MINIMUM_DROP and (old_price - price) >= 5000:
                         deals.append({
                             "name": name,
                             "rating": rating,
@@ -258,7 +259,7 @@ async def scan(interaction: discord.Interaction):
                 f"🔎 **SCAN COMPLETE**\n\n"
                 f"Scanned **{len(players)} players**.\n"
                 f"💾 Prices saved.\n\n"
-                f"📊 No price drops of 5%+ detected yet.\n\n"
+                f"📊 No price drops of {MINIMUM_DROP}%+ detected yet.\n\n"
                 f"Run `/scan` again later to compare prices."
             )
             return
