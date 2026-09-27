@@ -109,7 +109,7 @@ DB_FILE = "prices.db"
 def init_database():
     conn = sqlite3.connect(DB_FILE)
 
-       """)
+    """)
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS watchlist (
