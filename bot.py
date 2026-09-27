@@ -380,7 +380,7 @@ def get_fc27_players(platform="ps"):
     response.raise_for_status()
 
     return response.json()
-     def get_card_price(player_id):
+def get_card_price(player_id):
     url = f"{FUTBIN_API_BASE}/get_fc27_player_price"
 
     headers = {
