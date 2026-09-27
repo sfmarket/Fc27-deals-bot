@@ -379,6 +379,29 @@ def get_fc27_players(platform="ps"):
     response.raise_for_status()
 
     return response.json()
+     def get_card_price(player_id):
+    url = f"{FUTBIN_API_BASE}/get_fc27_player_price"
+
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
+
+    params = {
+        "player_id": player_id
+    }
+
+    response = requests.get(
+        url,
+        headers=headers,
+        params=params,
+        timeout=60
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data.get("data", data)
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
     await interaction.response.defer()
