@@ -195,13 +195,18 @@ def save_prices(prices):
 
     for player_id, price in prices.items():
         conn.execute(
-            "UPDATE prices SET price = ?, scanned_at = CURRENT_TIMESTAMP WHERE player_id = ?",
-            (price, player_id)
+            """
+            INSERT INTO prices (player_id, price, scanned_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(player_id) DO UPDATE SET
+                price = excluded.price,
+                scanned_at = CURRENT_TIMESTAMP
+            """,
+            (player_id, price)
         )
 
     conn.commit()
     conn.close()
-
 
 @client.tree.command(
     name="scan",
@@ -211,7 +216,7 @@ async def scan(interaction: discord.Interaction):
     await interaction.response.defer()
 
     try:
-        players = get_fc27_players("ps", 85)
+        players = get_fc27_players("ps")
 
         if not players:
             await interaction.followup.send(
@@ -233,14 +238,6 @@ async def scan(interaction: discord.Interaction):
             player_id = f"{name}|{rating}|{position}|{card_type}"
 
             new_prices[player_id] = price
-            save_player_price(
-                player_id,
-                name,
-                rating,
-                position,
-                "PS",
-                price
-            )
 
             if player_id in old_prices:
                 old_price = old_prices[player_id]
@@ -258,7 +255,8 @@ async def scan(interaction: discord.Interaction):
                             "drop": round(drop, 1)
                         })
 
-
+        save_prices(new_prices)
+        
         if not deals:
             await interaction.followup.send(
                 f"🔎 **SCAN COMPLETE**\n\n"
@@ -311,46 +309,52 @@ def is_deal(current_price, average_price, minimum_drop=20):
     
 PARSE_API_KEY = os.getenv("PARSE_API_KEY")
 
-def get_fc27_players(platform="ps", min_rating=None):
+def get_fc27_players(platform="ps"):
     url = "https://api.parse.bot/scraper/a1271aad-bcbf-4464-8762-47f1d15efa81/list_players"
 
     headers = {
         "X-API-Key": PARSE_API_KEY
     }
 
+    card_types = [
+        "Base Icon",
+        "Base Hero",
+        "Team of the week"
+    ]
+
     all_players = []
-    page = 1
 
-    while True:
-        params = {
-            "page": page,
-            "platform": platform,
-        }
+    for card_type in card_types:
+        page = 1
 
-        if min_rating is not None:
-            params["min_rating"] = min_rating
+        while True:
+            params = {
+                "page": page,
+                "platform": platform,
+                "card_type": card_type
+            }
             
-        response = requests.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=60
-        )
+            response = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=60
+            )
 
-        response.raise_for_status()
+            response.raise_for_status()
 
-        data = response.json()
-        page_data = data.get("data", {})
-        players = page_data.get("players", [])
+            data = response.json()
+            page_data = data.get("data", {})
+            players = page_data.get("players", [])
 
-        all_players.extend(players)
+            all_players.extend(players)
 
-        next_page = page_data.get("next_page")
+            next_page = page_data.get("next_page")
 
-        if next_page is None:
-            break
+            if next_page is None:
+                break
 
-        page = next_page
+            page = next_page
 
     return all_players
 @client.tree.command(name="live", description="Test live FC27 market prices")
@@ -358,7 +362,7 @@ async def live(interaction: discord.Interaction):
     await interaction.response.defer()
     
     try:
-        players = get_fc27_players("ps", 85)
+        players = get_fc27_players(platform="ps")
 
         if not players:
             await interaction.followup.send(
@@ -386,7 +390,7 @@ async def live(interaction: discord.Interaction):
 @tasks.loop(minutes=AUTO_SCAN_MINUTES)
 async def auto_scan():
     try:
-        players = get_fc27_players("ps", 85)
+        players = get_fc27_players("ps")
 
         if not players:
             print("AUTO SCAN: No players returned.")
