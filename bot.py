@@ -10,6 +10,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 MINIMUM_DROP = 5
 AUTO_SCAN_MINUTES = 15
 AUTO_SCAN_CHANNEL_ID = int(os.getenv("AUTO_SCAN_CHANNEL_ID", "0"))
+FUTBIN_API_BASE = "https://api.parse.bot/scraper/21963078-8a17-40ff-a896-9b0b0ec3e828"
 
 class DealsBot(discord.Client):
     def __init__(self):
@@ -362,6 +363,22 @@ def get_fc27_players(platform="ps"):
             page = next_page
 
     return all_players
+    def get_market_trends():
+    url = f"{FUTBIN_API_BASE}/get_market_trends"
+
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
+
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=60
+    )
+
+    response.raise_for_status()
+
+    return response.json()
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
     await interaction.response.defer()
