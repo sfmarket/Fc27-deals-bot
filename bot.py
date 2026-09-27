@@ -427,90 +427,89 @@ def get_fc27_watchlist():
         "X-API-Key": PARSE_API_KEY
     }
 
-    versions = [
-        "Icon",
-        "Base Hero",
-        "Team Of The Week"
-    ]
-
     all_players = []
 
-    for version in versions:
+    page = 1
 
-        page = 1
+    while True:
 
-        while True:
+        params = {
+            "page": page,
+            "fc27_only": "true"
+        }
 
-            params = {
-                "page": page,
-                "fc27_only": "true",
-                "version": version
-            }
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=60
+        )
 
-            response = requests.get(
-                url,
-                headers=headers,
-                params=params,
-                timeout=60
-            )
+        response.raise_for_status()
 
-            response.raise_for_status()
+        data = response.json()
+        payload = data.get("data", data)
 
-            data = response.json()
-            payload = data.get("data", data)
+        players = payload.get(
+            "players",
+            []
+        )
 
-            players = payload.get(
-                "players",
-                []
-            )
+        if not players:
+            break
 
-            if not players:
-                break
+        for player in players:
 
-            for player in players:
+            actual_version = str(
+                player.get("version", "")
+            ).strip().lower()
 
-                actual_version = str(
-                    player.get("version", "")
-                ).strip().lower()
+            if actual_version not in {
+                "icon",
+                "base icon",
+                "hero",
+                "base hero",
+                "heroes",
+                "base heroes",
+                "totw",
+                "team of the week"
+            }:
+                continue
 
-                wanted_version = version.lower()
+            player_id = player.get("id")
 
-                if actual_version != wanted_version:
-                    continue
+            if not player_id:
+                continue
 
-                player_id = player.get("id")
+            all_players.append({
+                "id": str(player_id),
+                "name": player.get(
+                    "name",
+                    "Unknown"
+                ),
+                "rating": player.get(
+                    "rating",
+                    0
+                ),
+                "position": player.get(
+                    "position",
+                    "?"
+                ),
+                "version": player.get(
+                    "version",
+                    "Unknown"
+                )
+            })
 
-                if not player_id:
-                    continue
+        has_more = payload.get(
+            "has_more",
+            False
+        )
 
-                all_players.append({
-                    "id": str(player_id),
-                    "name": player.get(
-                        "name",
-                        "Unknown"
-                    ),
-                    "rating": player.get(
-                        "rating",
-                        0
-                    ),
-                    "position": player.get(
-                        "position",
-                        "?"
-                    ),
-                    "version": player.get(
-                        "version",
-                        version
-                    )
-                })
+        if not has_more:
+            break
 
-            next_page = payload.get(
-                "next_page"
-            )
-
-            if next_page is None:
-                break
-
-            page = next_page
+        page += 1
 
     unique_players = {}
 
