@@ -472,38 +472,52 @@ async def versions(interaction: discord.Interaction):
             "X-API-Key": PARSE_API_KEY
         }
 
-        params = {
-            "page": 1,
-            "fc27_only": "true"
-        }
+        versions_to_test = [
+            "Hero",
+            "TOTW"
+        ]
 
-        response = requests.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=60
-        )
+        results = {}
 
-        response.raise_for_status()
+        for version in versions_to_test:
+            params = {
+                "page": 1,
+                "fc27_only": "true",
+                "version": version
+            }
 
-        data = response.json()
-        payload = data.get("data", data)
-
-        players = payload.get("players", [])
-
-        found_versions = sorted(
-            set(
-                player.get("version")
-                for player in players
-                if player.get("version")
+            response = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=60
             )
-        )
+
+            response.raise_for_status()
+
+            data = response.json()
+            payload = data.get("data", data)
+
+            players = payload.get("players", [])
+
+            actual_versions = sorted(
+                set(
+                    player.get("version")
+                    for player in players
+                    if player.get("version")
+                )
+            )
+
+            results[version] = {
+                "count": len(players),
+                "actual_versions": actual_versions
+            }
 
         print("FC27 VERSION TEST:")
-        print(json.dumps(found_versions, indent=2))
+        print(json.dumps(results, indent=2))
 
         await interaction.followup.send(
-            "✅ FC27 version data retrieved. Check Railway logs."
+            "✅ Hero + TOTW version test completed. Check Railway logs."
         )
 
     except Exception as e:
