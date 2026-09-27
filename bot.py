@@ -364,8 +364,8 @@ def get_fc27_players(platform="ps"):
 
         return all_players
         
-    def get_market_trends():
-        url = f"{FUTBIN_API_BASE}/get_market_trends"
+def get_market_trends():
+    url = f"{FUTBIN_API_BASE}/get_market_trends"
 
     headers = {
         "X-API-Key": PARSE_API_KEY
