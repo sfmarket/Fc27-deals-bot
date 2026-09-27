@@ -685,7 +685,7 @@ async def auto_scan():
     try:
         print("AUTO SCAN: Starting market scan.")
 
-    players = load_watchlist()
+players = load_watchlist()
 
 if not players:
     print("AUTO SCAN: Watchlist is empty. Building it now.")
@@ -702,9 +702,9 @@ if not players:
         f"AUTO SCAN: Saved {len(players)} cards to watchlist."
     )
 
-print(
-    f"AUTO SCAN: Watchlist contains {len(players)} cards."
-)
+    print(
+        f"AUTO SCAN: Watchlist contains {len(players)} cards."
+    )
         # Split into batches of 500 for the bulk snapshot endpoint
         batches = [
             players[i:i + 500]
