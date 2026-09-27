@@ -326,8 +326,12 @@ def get_fc27_players(platform="ps"):
 
     for card_type in card_types:
         page = 1
+        pages_fetched = 0
 
         while True:
+            if pages_fetched >= 1:
+                break
+                
             params = {
                 "page": page,
                 "platform": platform,
@@ -342,6 +346,7 @@ def get_fc27_players(platform="ps"):
             )
 
             response.raise_for_status()
+            pages_fetched += 1
 
             data = response.json()
             page_data = data.get("data", {})
