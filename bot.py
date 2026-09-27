@@ -3,6 +3,10 @@ import discord
 import requests
 import json
 import sqlite3
+DB_FILE = os.path.join(
+    os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "."),
+    "bot.db"
+)
 from discord import app_commands
 from discord.ext import tasks
 
@@ -103,8 +107,6 @@ async def deal(
     )
 
     await interaction.response.send_message(embed=embed)
-DB_FILE = "prices.db"
-
 
 def init_database():
     conn = sqlite3.connect(DB_FILE)
