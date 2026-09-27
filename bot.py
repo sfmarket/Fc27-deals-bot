@@ -501,14 +501,6 @@ def get_fc27_watchlist():
                 )
             })
 
-        has_more = payload.get(
-            "has_more",
-            False
-        )
-
-        if not has_more:
-            break
-
         page += 1
 
     unique_players = {}
