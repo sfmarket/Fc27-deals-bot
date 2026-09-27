@@ -109,15 +109,15 @@ DB_FILE = "prices.db"
 def init_database():
     conn = sqlite3.connect(DB_FILE)
 
+       """)
+
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS prices (
+        CREATE TABLE IF NOT EXISTS watchlist (
             player_id TEXT PRIMARY KEY,
             name TEXT,
             rating INTEGER,
             position TEXT,
-            platform TEXT,
-            price INTEGER,
-            scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            version TEXT
         )
     """)
 
@@ -126,7 +126,53 @@ def init_database():
 
 
 init_database()
+def save_watchlist(players):
+    conn = sqlite3.connect(DB_FILE)
 
+    conn.execute("DELETE FROM watchlist")
+
+    for player in players:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO watchlist
+            (player_id, name, rating, position, version)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                player["id"],
+                player["name"],
+                player["rating"],
+                player["position"],
+                player["version"]
+            )
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def load_watchlist():
+    conn = sqlite3.connect(DB_FILE)
+
+    rows = conn.execute(
+        """
+        SELECT player_id, name, rating, position, version
+        FROM watchlist
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "name": row[1],
+            "rating": row[2],
+            "position": row[3],
+            "version": row[4]
+        }
+        for row in rows
+    ]
 
 def get_previous_price(player_id):
     conn = sqlite3.connect(DB_FILE)
@@ -371,22 +417,24 @@ def get_fc27_watchlist():
         "X-API-Key": PARSE_API_KEY
     }
 
-    all_players = []
-
     versions = [
-        "ICON",
-        "HERO",
-        "TOTW"
+        "Icon",
+        "Base Hero",
+        "Team Of The Week"
     ]
 
+    all_players = []
+
     for version in versions:
+
         page = 1
 
         while True:
+
             params = {
                 "page": page,
-                "version": version,
-                "fc27_only": "true"
+                "fc27_only": "true",
+                "version": version
             }
 
             response = requests.get(
@@ -401,21 +449,67 @@ def get_fc27_watchlist():
             data = response.json()
             payload = data.get("data", data)
 
-            players = payload.get("players", [])
+            players = payload.get(
+                "players",
+                []
+            )
 
             if not players:
                 break
 
-            all_players.extend(players)
+            for player in players:
 
-            next_page = payload.get("next_page")
+                actual_version = str(
+                    player.get("version", "")
+                ).strip().lower()
+
+                wanted_version = version.lower()
+
+                if actual_version != wanted_version:
+                    continue
+
+                player_id = player.get("id")
+
+                if not player_id:
+                    continue
+
+                all_players.append({
+                    "id": str(player_id),
+                    "name": player.get(
+                        "name",
+                        "Unknown"
+                    ),
+                    "rating": player.get(
+                        "rating",
+                        0
+                    ),
+                    "position": player.get(
+                        "position",
+                        "?"
+                    ),
+                    "version": player.get(
+                        "version",
+                        version
+                    )
+                })
+
+            next_page = payload.get(
+                "next_page"
+            )
 
             if next_page is None:
                 break
 
             page = next_page
 
-    return all_players
+    unique_players = {}
+
+    for player in all_players:
+        unique_players[player["id"]] = player
+
+    return list(
+        unique_players.values()
+    )
 def get_market_trends():
     url = f"{FUTBIN_API_BASE}/get_market_trends"
 
@@ -576,78 +670,279 @@ async def live(interaction: discord.Interaction):
         await interaction.followup.send(
             "❌ Couldn't retrieve live FC27 data."
         )
-@tasks.loop(minutes=AUTO_SCAN_MINUTES)
+@tasks.loop(hours=8)
 async def auto_scan():
     try:
-        players = get_fc27_players("ps")
+        print("AUTO SCAN: Starting market scan.")
 
-        if not players:
-            print("AUTO SCAN: No players returned.")
-            return
+    players = load_watchlist()
+
+if not players:
+    print("AUTO SCAN: Watchlist is empty. Building it now.")
+
+    players = get_fc27_watchlist()
+
+    if not players:
+        print("AUTO SCAN: Could not build watchlist.")
+        return
+
+    save_watchlist(players)
+
+    print(
+        f"AUTO SCAN: Saved {len(players)} cards to watchlist."
+    )
+
+print(
+    f"AUTO SCAN: Watchlist contains {len(players)} cards."
+)
+        # Split into batches of 500 for the bulk snapshot endpoint
+        batches = [
+            players[i:i + 500]
+            for i in range(0, len(players), 500)
+        ]
 
         old_prices = load_prices()
         new_prices = {}
         deals = []
 
-        for player in players:
-            name = player.get("name", "Unknown")
-            rating = player.get("rating", "?")
-            position = player.get("position", "?")
-            card_type = player.get("card_type", "?")
-            price = player.get("price", 0)
-
-            player_id = f"{name}|{rating}|{position}|{card_type}"
-
-            new_prices[player_id] = price
-
-            if player_id in old_prices:
-                old_price = old_prices[player_id]
-
-                if old_price > 0 and price < old_price:
-                    drop = ((old_price - price) / old_price) * 100
-
-                    if drop >= 5 and (old_price - price) >= 5000:
-                        deals.append({
-                            "name": name,
-                            "rating": rating,
-                            "position": position,
-                            "price": price,
-                            "old_price": old_price,
-                            "drop": round(drop, 1)
-                        })
-
-                save_prices(new_prices)
-
-        print(f"AUTO SCAN: Scanned {len(players)} players.")
-
-        if deals:
-            deals.sort(
-                key=lambda deal: (
-                    deal["old_price"] - deal["price"],
-                    deal["drop"]
-                ),
-                reverse=True
+        for batch in batches:
+            player_ids = ",".join(
+                player["id"]
+                for player in batch
             )
 
-        print(f"AUTO SCAN: Found {len(deals)} deals!")
+            url = f"{FUTBIN_API_BASE}/get_fc27_market_snapshot"
 
-        channel = client.get_channel(AUTO_SCAN_CHANNEL_ID)
+            headers = {
+                "X-API-Key": PARSE_API_KEY
+            }
 
-        if channel and deals:
-            message = "🔥 **FC27 DEALS FOUND**\n\n"
+            params = {
+                "player_ids": player_ids,
+                "platform": "ps",
+                "year": "27"
+            }
 
-            for deal in deals[:10]:
-                message += (
-                    f"👤 **{deal['name']}** — {deal['rating']} {deal['position']}\n"
-                    f"💰 Now: **{deal['price']:,} coins**\n"
-                    f"📈 Previous: **{deal['old_price']:,} coins**\n"
-                    f"📉 Drop: **{deal['drop']}%**\n\n"
+            response = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=120
+            )
+
+            response.raise_for_status()
+
+            data = response.json()
+            payload = data.get("data", data)
+
+            snapshot_players = payload.get(
+                "players",
+                []
+            )
+
+            player_lookup = {
+                player["id"]: player
+                for player in batch
+            }
+
+            for snapshot in snapshot_players:
+                player_id = str(
+                    snapshot.get("player_id")
                 )
 
+                price = snapshot.get("price")
+
+                if price is None:
+                    continue
+
+                player = player_lookup.get(player_id)
+
+                if not player:
+                    continue
+
+                new_prices[player_id] = price
+
+                if player_id not in old_prices:
+                    continue
+
+                old_price = old_prices[player_id]
+
+                if old_price <= 0:
+                    continue
+
+                if price >= old_price:
+                    continue
+
+                coin_drop = old_price - price
+                percentage_drop = (
+                    coin_drop / old_price
+                ) * 100
+
+                if (
+                    percentage_drop >= MINIMUM_DROP
+                    and coin_drop >= 5000
+                ):
+                    deals.append({
+                        "id": player_id,
+                        "name": player["name"],
+                        "rating": player["rating"],
+                        "position": player["position"],
+                        "version": player["version"],
+                        "price": price,
+                        "old_price": old_price,
+                        "coin_drop": coin_drop,
+                        "drop": round(
+                            percentage_drop,
+                            1
+                        )
+                    })
+
+        save_prices(new_prices)
+
+        print(
+            f"AUTO SCAN: Scanned "
+            f"{len(new_prices)} cards."
+        )
+
+        print(
+            f"AUTO SCAN: Found "
+            f"{len(deals)} deals."
+        )
+
+        if not deals:
+            return
+
+        # Largest coin drops first
+        deals.sort(
+            key=lambda deal: (
+                deal["coin_drop"],
+                deal["drop"]
+            ),
+            reverse=True
+        )
+
+        channel = client.get_channel(
+            AUTO_SCAN_CHANNEL_ID
+        )
+
+        if not channel:
+            print(
+                "AUTO SCAN: Discord channel not found."
+            )
+            return
+
+        for deal in deals[:10]:
+
+            # Get detailed information only
+            # for cards that actually triggered.
+            detail_url = (
+                f"{FUTBIN_API_BASE}"
+                f"/get_fc27_player_price"
+            )
+
+            detail_params = {
+                "player_id": deal["id"]
+            }
+
+            detail_response = requests.get(
+                detail_url,
+                headers={
+                    "X-API-Key": PARSE_API_KEY
+                },
+                params=detail_params,
+                timeout=60
+            )
+
+            detail_response.raise_for_status()
+
+            detail_data = detail_response.json()
+            detail = detail_data.get(
+                "data",
+                detail_data
+            )
+
+            average_24h = detail.get(
+                "average_price_24h"
+            )
+
+            updated = detail.get(
+                "updated",
+                "Unknown"
+            )
+
+            recent_prices = detail.get(
+                "recent_prices",
+                []
+            )
+
+            if average_24h:
+                average_text = (
+                    f"{average_24h:,.0f}"
+                )
+
+                estimated_profit = (
+                    average_24h * 0.95
+                    - deal["price"]
+                )
+
+                estimated_roi = (
+                    estimated_profit
+                    / deal["price"]
+                ) * 100
+
+                profit_text = (
+                    f"{estimated_profit:,.0f}"
+                )
+
+                roi_text = (
+                    f"{estimated_roi:.1f}%"
+                )
+
+            else:
+                average_text = "N/A"
+                profit_text = "N/A"
+                roi_text = "N/A"
+
+            if recent_prices:
+                recent_text = ", ".join(
+                    f"{price:,}"
+                    for price in recent_prices[-5:]
+                )
+            else:
+                recent_text = "N/A"
+
+            message = (
+                "🔥 **FC27 DEAL FOUND**\n\n"
+                f"👤 **{deal['name']}**\n"
+                f"⭐ {deal['rating']} "
+                f"{deal['position']}\n"
+                f"🎴 {deal['version']}\n\n"
+                f"💰 Current: "
+                f"**{deal['price']:,}** coins\n"
+                f"📈 Previous: "
+                f"**{deal['old_price']:,}** coins\n"
+                f"📉 Drop: "
+                f"**{deal['drop']}%**\n"
+                f"💸 Coin drop: "
+                f"**{deal['coin_drop']:,}**\n\n"
+                f"📊 24h average: "
+                f"**{average_text}** coins\n"
+                f"💵 Est. profit after tax: "
+                f"**{profit_text}** coins\n"
+                f"📈 Est. ROI: "
+                f"**{roi_text}**\n"
+                f"🕐 Price updated: "
+                f"**{updated}**\n"
+                f"📋 Recent sales: "
+                f"**{recent_text}**"
+            )
             await channel.send(message)
 
     except Exception as e:
-        print(f"AUTO SCAN ERROR: {type(e).__name__}: {e}")
+        print(
+            f"AUTO SCAN ERROR: "
+            f"{type(e).__name__}: {e}"
+        )
 
 client.run(TOKEN)
 
