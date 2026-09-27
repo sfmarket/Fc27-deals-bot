@@ -409,6 +409,26 @@ def get_card_price(player_id):
     data = response.json()
 
     return data.get("data", data)
+@client.tree.command(name="trends", description="Test FC27 market trends")
+async def trends(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        data = get_market_trends()
+
+        print("MARKET TRENDS RESPONSE:")
+        print(json.dumps(data, indent=2))
+
+        await interaction.followup.send(
+            "✅ Market trends data retrieved. Check Railway logs."
+        )
+
+    except Exception as e:
+        print(f"TRENDS ERROR: {type(e).__name__}: {e}")
+
+        await interaction.followup.send(
+            "❌ Couldn't retrieve market trends."
+        )
 @client.tree.command(name="live", description="Test live FC27 market prices")
 async def live(interaction: discord.Interaction):
     await interaction.response.defer()
