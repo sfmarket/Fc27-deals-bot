@@ -435,7 +435,8 @@ def get_fc27_watchlist():
 
         params = {
             "page": page,
-            "fc27_only": "true"
+            "fc27_only": "true",
+            "min_rating":75
         }
 
         response = requests.get(
