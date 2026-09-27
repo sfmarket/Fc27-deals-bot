@@ -677,7 +677,7 @@ async def auto_scan():
     try:
         print("AUTO SCAN: Starting market scan.")
 
-        players = []
+        players = load_watchlist()
 
         if not players:
             print("AUTO SCAN: Watchlist is empty. Building it now.")
