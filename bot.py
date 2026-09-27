@@ -380,6 +380,12 @@ def get_fc27_players(platform="ps"):
     response.raise_for_status()
 
     return response.json()
+def get_market_movers():
+    data = get_market_trends()
+
+    payload = data.get("data", data)
+
+    return payload.get("top_movers", [])
 def get_card_price(player_id):
     url = f"{FUTBIN_API_BASE}/get_fc27_player_price"
 
