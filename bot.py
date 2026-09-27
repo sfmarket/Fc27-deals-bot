@@ -109,6 +109,16 @@ DB_FILE = "prices.db"
 def init_database():
     conn = sqlite3.connect(DB_FILE)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS prices (
+            player_id TEXT PRIMARY KEY,
+            name TEXT,
+            rating INTEGER,
+            position TEXT,
+            platform TEXT,
+            price INTEGER,
+            scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     """)
 
     conn.execute("""
