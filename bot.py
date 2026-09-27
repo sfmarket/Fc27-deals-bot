@@ -363,7 +363,59 @@ def get_fc27_players(platform="ps"):
             page = next_page
 
         return all_players
-        
+
+def get_fc27_watchlist():
+    url = f"{FUTBIN_API_BASE}/get_players"
+
+    headers = {
+        "X-API-Key": PARSE_API_KEY
+    }
+
+    all_players = []
+
+    versions = [
+        "ICON",
+        "HERO",
+        "TOTW"
+    ]
+
+    for version in versions:
+        page = 1
+
+        while True:
+            params = {
+                "page": page,
+                "version": version,
+                "fc27_only": "true"
+            }
+
+            response = requests.get(
+                url,
+                headers=headers,
+                params=params,
+                timeout=60
+            )
+
+            response.raise_for_status()
+
+            data = response.json()
+            payload = data.get("data", data)
+
+            players = payload.get("players", [])
+
+            if not players:
+                break
+
+            all_players.extend(players)
+
+            next_page = payload.get("next_page")
+
+            if next_page is None:
+                break
+
+            page = next_page
+
+    return all_players
 def get_market_trends():
     url = f"{FUTBIN_API_BASE}/get_market_trends"
 
@@ -409,6 +461,57 @@ def get_card_price(player_id):
     data = response.json()
 
     return data.get("data", data)
+@client.tree.command(name="versions", description="Check FC27 card versions")
+async def versions(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        url = f"{FUTBIN_API_BASE}/get_players"
+
+        headers = {
+            "X-API-Key": PARSE_API_KEY
+        }
+
+        params = {
+            "page": 1,
+            "fc27_only": "true"
+        }
+
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            timeout=60
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+        payload = data.get("data", data)
+
+        players = payload.get("players", [])
+
+        found_versions = sorted(
+            set(
+                player.get("version")
+                for player in players
+                if player.get("version")
+            )
+        )
+
+        print("FC27 VERSION TEST:")
+        print(json.dumps(found_versions, indent=2))
+
+        await interaction.followup.send(
+            "✅ FC27 version data retrieved. Check Railway logs."
+        )
+
+    except Exception as e:
+        print(f"VERSION TEST ERROR: {type(e).__name__}: {e}")
+
+        await interaction.followup.send(
+            "❌ Couldn't retrieve FC27 versions."
+        )
 @client.tree.command(name="trends", description="Test FC27 market trends")
 async def trends(interaction: discord.Interaction):
     await interaction.response.defer()
